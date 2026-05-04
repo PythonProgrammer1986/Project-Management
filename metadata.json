@@ -1,0 +1,6 @@
+{
+  "name": "TaskFlow - Project Manager",
+  "description": "A full-fledged project management application similar to Asana with Kanban boards, list views, and task management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
