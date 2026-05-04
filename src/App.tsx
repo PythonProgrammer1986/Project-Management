@@ -13,7 +13,7 @@ import { NotesView } from './views/NotesView';
 import { InboxView } from './views/InboxView';
 import { BudgetView } from './views/BudgetView';
 import { CreateTaskDialog } from './components/CreateTaskDialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs-component';
 import { Button } from './components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from './components/ui/dropdown-menu';
 import { Filter, Users } from 'lucide-react';
