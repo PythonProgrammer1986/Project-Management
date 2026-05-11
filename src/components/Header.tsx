@@ -106,12 +106,11 @@ export function Header() {
       </div>
       
       <div className="flex items-center space-x-3 w-[250px] justify-end">
-        <div className="flex -space-x-2">
+        <div className="flex space-x-2 text-xs text-muted-foreground mr-2 font-medium">
           {workspace.users.map((user) => (
-            <Avatar key={user.id} className="h-8 w-8 border-2 border-background">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback>{user.name[0]}</AvatarFallback>
-            </Avatar>
+            <span key={user.id} className="px-2 py-1 bg-slate-100 rounded-md whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]" title={user.name}>
+              {user.name.split(' ')[0]}
+            </span>
           ))}
         </div>
         <ShareProjectDialog>

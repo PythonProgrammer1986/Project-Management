@@ -13,6 +13,7 @@ import { NotesView } from './views/NotesView';
 import { InboxView } from './views/InboxView';
 import { BudgetView } from './views/BudgetView';
 import { CreateTaskDialog } from './components/CreateTaskDialog';
+import { ExcelUploadButton } from './components/ExcelUploadButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Button } from './components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from './components/ui/dropdown-menu';
@@ -118,6 +119,7 @@ function Dashboard() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <div className="h-4 w-px bg-border mx-2" />
+                  <ExcelUploadButton />
                   <CreateTaskDialog>
                     <Button size="sm" className="h-8">Add Task</Button>
                   </CreateTaskDialog>
@@ -140,12 +142,16 @@ function Dashboard() {
   );
 }
 
+import { FirebaseProvider } from './components/FirebaseProvider';
+
 export default function App() {
   return (
-    <WorkspaceProvider>
-      <Dashboard />
-      <Toaster />
-    </WorkspaceProvider>
+    <FirebaseProvider>
+      <WorkspaceProvider>
+        <Dashboard />
+        <Toaster />
+      </WorkspaceProvider>
+    </FirebaseProvider>
   );
 }
 

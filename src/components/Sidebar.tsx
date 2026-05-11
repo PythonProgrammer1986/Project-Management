@@ -15,10 +15,12 @@ export function Sidebar() {
   return (
     <div className="w-64 border-r bg-background flex flex-col h-full">
       <div className="p-4 flex items-center space-x-3">
-        <Avatar className="h-8 w-8 rounded-md bg-primary text-primary-foreground">
-          <AvatarFallback className="rounded-md font-semibold">TF</AvatarFallback>
-        </Avatar>
-        <span className="font-semibold">{workspace.name}</span>
+        <div className="flex h-8 w-8 items-center justify-center bg-[#FFCC00] rounded-sm">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#4D4D4D]">
+            <path d="M5 5V19H19V17H7V13H17V11H7V7H19V5H5Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <span className="font-bold text-lg text-[#4D4D4D] uppercase tracking-wider">{workspace.name}</span>
       </div>
       
       <ScrollArea className="flex-1 px-3 py-2">

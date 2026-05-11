@@ -32,8 +32,10 @@ export function MyTasksView() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[400px]">Task Name</TableHead>
+                  <TableHead className="w-[300px]">Task Name</TableHead>
+                  <TableHead className="w-[300px]">Description</TableHead>
                   <TableHead>Project</TableHead>
+                  <TableHead>Start Date</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Status</TableHead>
@@ -56,6 +58,11 @@ export function MyTasksView() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <div className="text-xs text-muted-foreground truncate max-w-[280px]" title={task.description}>
+                          {task.description || <span className="italic">No description</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         {project ? (
                           <div className="flex items-center gap-2">
                              <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: project.color }} />
@@ -63,6 +70,13 @@ export function MyTasksView() {
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground italic">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {task.startDate ? (
+                          <span className="text-xs">{format(new Date(task.startDate), 'MMM d, yyyy')}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell>

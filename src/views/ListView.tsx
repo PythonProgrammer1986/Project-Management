@@ -34,8 +34,10 @@ export function ListView({ showCompleted = true }: { showCompleted?: boolean }) 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[400px]">Task Name</TableHead>
+              <TableHead className="w-[300px]">Task Name</TableHead>
+              <TableHead className="w-[300px]">Description</TableHead>
               <TableHead>Assignee</TableHead>
+              <TableHead>Start Date</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
@@ -58,16 +60,28 @@ export function ListView({ showCompleted = true }: { showCompleted?: boolean }) 
                     </div>
                   </TableCell>
                   <TableCell>
+                    <div className="text-xs text-muted-foreground truncate max-w-[280px]" title={task.description}>
+                      {task.description || <span className="italic">No description</span>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     {assignee ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="w-5 h-5">
                           <AvatarImage src={assignee.avatar} />
-                          <AvatarFallback className="text-[10px]">{assignee.name[0]}</AvatarFallback>
+                          <AvatarFallback className="text-[10px] bg-[#FFCC00] text-[#4D4D4D] font-medium">{assignee.name[0]}</AvatarFallback>
                         </Avatar>
                         <span className="text-xs text-muted-foreground">{assignee.name}</span>
                       </div>
                     ) : (
                       <span className="text-xs text-muted-foreground italic">Unassigned</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {task.startDate ? (
+                      <span className="text-xs">{format(new Date(task.startDate), 'MMM d, yyyy')}</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   <TableCell>

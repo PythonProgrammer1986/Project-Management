@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user in the workspace",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "avatar": { "type": "string" },
+        "activeAt": { "type": "string" }
+      }
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A project in the workspace",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" },
+        "color": { "type": "string" }
+      }
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A task in the workspace",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "assigneeId": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Users"
+    },
+    "tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Tasks"
+    },
+    "projects/{projectId}": {
+      "schema": "Project",
+      "description": "Projects"
+    }
+  }
+}
