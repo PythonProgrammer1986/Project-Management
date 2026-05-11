@@ -7,12 +7,54 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { cn } from '../lib/utils';
 import { Priority, Status } from '../types';
 
-export function ListView({ showCompleted = true }: { showCompleted?: boolean }) {
+export function ListView({ 
+  showCompleted = true,
+  filterAssignee = 'all',
+  filterPriority = 'all',
+  sortBy = 'none' 
+}: { 
+  showCompleted?: boolean;
+  filterAssignee?: string;
+  filterPriority?: string;
+  sortBy?: string;
+}) {
   const { workspace, activeProjectId, updateTask, setSelectedTaskId } = useWorkspace();
   let tasks = workspace.tasks.filter((t) => t.projectId === activeProjectId);
 
   if (!showCompleted) {
     tasks = tasks.filter(t => t.status !== 'Done');
+  }
+
+  if (filterAssignee !== 'all') {
+    if (filterAssignee === 'unassigned') {
+      tasks = tasks.filter(t => !t.assigneeId);
+    } else {
+      tasks = tasks.filter(t => t.assigneeId === filterAssignee);
+    }
+  }
+
+  if (filterPriority !== 'all') {
+    tasks = tasks.filter(t => t.priority === filterPriority);
+  }
+
+  if (sortBy !== 'none') {
+    tasks = [...tasks].sort((a, b) => {
+      if (sortBy === 'dueDate') {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      if (sortBy === 'priority') {
+        const priorityOrder: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      }
+      if (sortBy === 'assignee') {
+        const u1 = workspace.users.find(u => u.id === a.assigneeId)?.name || 'z';
+        const u2 = workspace.users.find(u => u.id === b.assigneeId)?.name || 'z';
+        return u1.localeCompare(u2);
+      }
+      return 0;
+    });
   }
 
   const priorityColors: Record<Priority, string> = {

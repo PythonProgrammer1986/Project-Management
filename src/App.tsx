@@ -17,6 +17,7 @@ import { ExcelUploadButton } from './components/ExcelUploadButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Button } from './components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from './components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Filter, Users } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
@@ -25,7 +26,11 @@ import { TaskSheet } from './components/TaskSheet';
 function Dashboard() {
   const [activeTab, setActiveTab] = useState("board");
   const [showCompleted, setShowCompleted] = useState(true);
-  const { activeView } = useWorkspace();
+  const [filterAssignee, setFilterAssignee] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [sortBy, setSortBy] = useState('none');
+  const { activeView, workspace } = useWorkspace();
+
 
   return (
     <div className="flex h-screen bg-background overflow-hidden text-sm">
@@ -105,13 +110,50 @@ function Dashboard() {
                 </Tabs>
                 
                <div className="flex items-center gap-2">
+                  <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+                    <SelectTrigger className="w-[120px] h-8 bg-transparent text-xs">
+                      <SelectValue placeholder="Assignee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Assignees</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {workspace.users.map(u => (
+                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterPriority} onValueChange={setFilterPriority}>
+                    <SelectTrigger className="w-[110px] h-8 bg-transparent text-xs">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priorities</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-[110px] h-8 bg-transparent text-xs">
+                      <SelectValue placeholder="Sort By" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Sort</SelectItem>
+                      <SelectItem value="dueDate">Due Date</SelectItem>
+                      <SelectItem value="priority">Priority</SelectItem>
+                      <SelectItem value="assignee">Assignee</SelectItem>
+                    </SelectContent>
+                  </Select>
+
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="hidden border-dashed md:flex h-8" />}>
                       <Filter className="mr-2 h-3.5 w-3.5" />
-                      Filter
+                      Filter Status
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Filter Tasks</DropdownMenuLabel>
+                      <DropdownMenuLabel>Status Filters</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuCheckboxItem checked={showCompleted} onCheckedChange={setShowCompleted}>
                         Show Completed Tasks
@@ -128,8 +170,8 @@ function Dashboard() {
             </div>
             
             <div className="flex-1 overflow-hidden bg-slate-50/50">
-              {activeTab === 'board' && <BoardView showCompleted={showCompleted} />}
-              {activeTab === 'list' && <ListView showCompleted={showCompleted} />}
+              {activeTab === 'board' && <BoardView showCompleted={showCompleted} filterAssignee={filterAssignee} filterPriority={filterPriority} sortBy={sortBy} />}
+              {activeTab === 'list' && <ListView showCompleted={showCompleted} filterAssignee={filterAssignee} filterPriority={filterPriority} sortBy={sortBy} />}
               {activeTab === 'timeline' && <TimelineView />}
               {activeTab === 'notes' && <NotesView />}
               {activeTab === 'budget' && <BudgetView />}

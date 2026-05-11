@@ -5,7 +5,7 @@ import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
-import { Download, Upload, Info } from 'lucide-react';
+import { Download, Upload, Info, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { BudgetLineItem } from '../types';
@@ -72,6 +72,60 @@ export function BudgetView() {
                 lineItems: p.budget?.lineItems?.map(item => 
                   item.id === id ? { ...item, [field]: value } : item
                 ) || []
+              } 
+            }
+          : p
+      )
+    }));
+  };
+
+  const handleAddLineItem = () => {
+    const newItem: BudgetLineItem = {
+      id: Math.random().toString(36).substring(2, 9),
+      srNo: '',
+      point: 'New Item',
+      capitalInvestment: '',
+      taskCompleted: '',
+      percentCompletion: 0,
+      estimatedKINR: 0,
+      actualKINR: 0,
+      remarks: ''
+    };
+    
+    setWorkspace(prev => ({
+      ...prev,
+      projects: prev.projects.map(p => 
+        p.id === activeProjectId 
+          ? { 
+              ...p, 
+              budget: { 
+                ...p.budget, 
+                total: p.budget?.total || 0,
+                spent: p.budget?.spent || 0,
+                currency: p.budget?.currency || '$',
+                lineItems: [...(p.budget?.lineItems || []), newItem],
+                conversionRate: p.budget?.conversionRate || parseFloat(conversionRate) || 1
+              } 
+            }
+          : p
+      )
+    }));
+  };
+
+  const handleDeleteLineItem = (id: string) => {
+    setWorkspace(prev => ({
+      ...prev,
+      projects: prev.projects.map(p => 
+        p.id === activeProjectId 
+          ? { 
+              ...p, 
+              budget: { 
+                ...p.budget, 
+                total: p.budget?.total || 0,
+                spent: p.budget?.spent || 0,
+                currency: p.budget?.currency || '$',
+                lineItems: (p.budget?.lineItems || []).filter(item => item.id !== id),
+                conversionRate: p.budget?.conversionRate || parseFloat(conversionRate) || 1
               } 
             }
           : p
@@ -250,8 +304,12 @@ export function BudgetView() {
 
         {lineItems.length > 0 ? (
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Budget Details Breakdown</CardTitle>
+              <Button size="sm" onClick={handleAddLineItem}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Item
+              </Button>
             </CardHeader>
             <div className="overflow-x-auto">
               <Table>
@@ -269,6 +327,7 @@ export function BudgetView() {
                     <TableHead className="text-right whitespace-nowrap">% Utilized</TableHead>
                     <TableHead className="text-right whitespace-nowrap">% Contrib.</TableHead>
                     <TableHead>Remarks</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -312,6 +371,11 @@ export function BudgetView() {
                         <TableCell className="text-muted-foreground">
                           <Input value={item.remarks} onChange={(e) => handleUpdateLineItem(item.id, 'remarks', e.target.value)} className="h-8 min-w-[150px] p-1 border-transparent hover:border-input focus-visible:border-input bg-transparent shadow-none" />
                         </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500" onClick={() => handleDeleteLineItem(item.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -324,10 +388,15 @@ export function BudgetView() {
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                <Upload className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
                <h3 className="text-lg font-medium">No Budget Data</h3>
-               <p className="text-muted-foreground mt-1 max-w-sm">Upload an Excel file containing your budget breakdown to see the detailed analytics.</p>
-               <Button variant="outline" className="mt-4" onClick={downloadTemplate}>
-                  <Download className="w-4 h-4 mr-2" /> Download Template
-               </Button>
+               <p className="text-muted-foreground mt-1 max-w-sm">Upload an Excel file or add items manually to start tracking budget.</p>
+               <div className="flex items-center gap-2 mt-4">
+                 <Button variant="outline" onClick={downloadTemplate}>
+                    <Download className="w-4 h-4 mr-2" /> Download Template
+                 </Button>
+                 <Button onClick={handleAddLineItem}>
+                    <Plus className="w-4 h-4 mr-2" /> Add Item Manually
+                 </Button>
+               </div>
             </CardContent>
           </Card>
         )}
