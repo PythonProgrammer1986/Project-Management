@@ -102,11 +102,9 @@ export function ExcelUploadButton() {
       />
       
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8">
-            <Upload className="mr-2 h-3.5 w-3.5" />
-            Excel
-          </Button>
+        <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-8" />}>
+          <Upload className="mr-2 h-3.5 w-3.5" />
+          Excel
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
