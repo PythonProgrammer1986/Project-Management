@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useWorkspace } from '../store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { format } from 'date-fns';
@@ -6,6 +6,10 @@ import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { cn } from '../lib/utils';
 import { Priority, Status } from '../types';
+import { Checkbox } from '../components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Link2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function ListView({ 
   showCompleted = true,
@@ -19,6 +23,8 @@ export function ListView({
   sortBy?: string;
 }) {
   const { workspace, activeProjectId, updateTask, setSelectedTaskId } = useWorkspace();
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+
   let tasks = workspace.tasks.filter((t) => t.projectId === activeProjectId);
 
   if (!showCompleted) {
@@ -70,12 +76,96 @@ export function ListView({
     "Done": "text-emerald-500"
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTasks(tasks.map(t => t.id));
+    } else {
+      setSelectedTasks([]);
+    }
+  };
+
+  const handleSelectTask = (taskId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTasks(prev => [...prev, taskId]);
+    } else {
+      setSelectedTasks(prev => prev.filter(id => id !== taskId));
+    }
+  };
+
+  const handleBulkUpdate = (field: 'status' | 'priority' | 'assigneeId', value: any) => {
+    let updatedCount = 0;
+    
+    selectedTasks.forEach(taskId => {
+      if (field === 'status' && value === 'Done') {
+        const task = workspace.tasks.find(t => t.id === taskId);
+        const unmetDependencies = task?.dependencies?.filter(depId => workspace.tasks.find(t => t.id === depId && t.status !== 'Done'));
+        if (unmetDependencies && unmetDependencies.length > 0) {
+          toast.error(`Could not complete "${task?.title}" due to unmet dependencies.`);
+          return;
+        }
+      }
+      updateTask(taskId, { [field]: value });
+      updatedCount++;
+    });
+    
+    setSelectedTasks([]);
+    if (updatedCount > 0) {
+      toast.success(`Updated ${updatedCount} task(s)`);
+    }
+  };
+
   return (
-    <div className="p-4">
+    <div className="p-4 flex flex-col gap-4">
+      {selectedTasks.length > 0 && (
+        <div className="bg-muted/50 p-2 border rounded-lg flex items-center justify-between">
+          <span className="text-sm font-medium px-2">{selectedTasks.length} tasks selected</span>
+          <div className="flex items-center gap-2">
+            <Select onValueChange={(val) => handleBulkUpdate('status', val as Status)}>
+              <SelectTrigger className="w-[140px] h-8 text-xs bg-background">
+                <SelectValue placeholder="Change Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="To Do">To Do</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="In Review">In Review</SelectItem>
+                <SelectItem value="Done">Done</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select onValueChange={(val) => handleBulkUpdate('priority', val as Priority)}>
+              <SelectTrigger className="w-[140px] h-8 text-xs bg-background">
+                <SelectValue placeholder="Change Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select onValueChange={(val) => handleBulkUpdate('assigneeId', val === 'unassigned' ? undefined : val)}>
+              <SelectTrigger className="w-[140px] h-8 text-xs bg-background">
+                <SelectValue placeholder="Change Assignee" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {workspace.users.map(u => (
+                  <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
       <div className="border rounded-lg bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px] px-4">
+                <Checkbox 
+                  checked={tasks.length > 0 && selectedTasks.length === tasks.length}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
               <TableHead className="w-[300px]">Task Name</TableHead>
               <TableHead className="w-[300px]">Description</TableHead>
               <TableHead>Assignee</TableHead>
@@ -88,17 +178,30 @@ export function ListView({
           <TableBody>
             {tasks.map((task) => {
               const assignee = workspace.users.find(u => u.id === task.assigneeId);
+              const unmetDependencies = task.dependencies?.filter(depId => workspace.tasks.find(t => t.id === depId && t.status !== 'Done')) || [];
               
               return (
                 <TableRow 
                   key={task.id} 
-                  className="cursor-pointer group"
+                  className={cn("cursor-pointer group", selectedTasks.includes(task.id) && "bg-muted/50")}
                   onClick={() => setSelectedTaskId(task.id)}
                 >
+                  <TableCell className="px-4" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox 
+                      checked={selectedTasks.includes(task.id)}
+                      onCheckedChange={(checked) => handleSelectTask(task.id, !!checked)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2 group-hover:text-primary transition-colors">
-                      <div className={cn("w-1.5 h-1.5 rounded-full", statusColors[task.status].replace('text', 'bg'))} />
-                      {task.title}
+                      <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", statusColors[task.status].replace('text', 'bg'))} />
+                      <span className="truncate">{task.title}</span>
+                      {task.dependencies && task.dependencies.length > 0 && (
+                        <Badge variant="outline" className={cn("ml-2 flex flex-shrink-0 items-center gap-1 font-normal text-[10px] px-1.5 py-0 rounded", unmetDependencies.length > 0 ? "border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-500/10" : "text-muted-foreground border-muted-foreground/30")}>
+                          <Link2 className="w-3 h-3" />
+                          {unmetDependencies.length > 0 ? `${unmetDependencies.length} blocked` : `${task.dependencies.length} deps`}
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

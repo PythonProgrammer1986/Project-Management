@@ -55,7 +55,21 @@ export function TaskSheet() {
                 "h-8 text-xs font-semibold uppercase tracking-wide px-3",
                 task.status === 'Done' ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700" : "text-muted-foreground bg-muted/50"
               )}
-              onClick={() => updateTask(task.id, { status: task.status === 'Done' ? 'To Do' : 'Done' })}
+              onClick={() => {
+                if (task.status !== 'Done') {
+                  const unmetDependencies = task.dependencies?.filter(depId => {
+                    const depTask = workspace.tasks.find(t => t.id === depId);
+                    return depTask && depTask.status !== 'Done';
+                  });
+                  if (unmetDependencies && unmetDependencies.length > 0) {
+                    toast.error('Cannot complete task due to unmet dependencies!');
+                    return;
+                  }
+                  updateTask(task.id, { status: 'Done' });
+                } else {
+                  updateTask(task.id, { status: 'To Do' });
+                }
+              }}
             >
               {task.status === 'Done' ? 'Completed' : 'Mark Complete'}
             </Button>

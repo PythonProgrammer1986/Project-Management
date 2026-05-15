@@ -5,7 +5,7 @@ import { Card } from '../components/ui/card';
 import { Status, Task } from '../types';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
-import { CalendarIcon, MessageSquare } from 'lucide-react';
+import { CalendarIcon, MessageSquare, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 
@@ -79,6 +79,13 @@ export function BoardView({
       
       const task = tasks.find(t => t.id === taskId);
       if (task && task.status !== newStatus) {
+        if (newStatus === 'Done') {
+          const unmetDependencies = task.dependencies?.filter(depId => workspace.tasks.find(t => t.id === depId && t.status !== 'Done'));
+          if (unmetDependencies && unmetDependencies.length > 0) {
+            import('sonner').then(({ toast }) => toast.error('Cannot complete task due to unmet dependencies!'));
+            return;
+          }
+        }
         updateTask(taskId, { status: newStatus });
       }
     }
@@ -138,8 +145,10 @@ function TaskCard({ task, users, onClick }: { key?: string | number; task: Task;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task.id,
   });
+  const { workspace } = useWorkspace();
 
   const assignee = users.find(u => u.id === task.assigneeId);
+  const unmetDependencies = task.dependencies?.filter(depId => workspace.tasks.find(t => t.id === depId && t.status !== 'Done')) || [];
 
   const priorityColors = {
     Low: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
@@ -162,11 +171,17 @@ function TaskCard({ task, users, onClick }: { key?: string | number; task: Task;
           task.priority === 'High' && "border-l-4 border-l-red-500 bg-white"
         )}
       >
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
         <Badge className={cn("text-[10px] uppercase font-semibold border-none px-1.5 py-0 rounded", priorityColors[task.priority])} variant="outline">
           {task.priority === 'High' && <span className="mr-1">🔥</span>}
           {task.priority}
         </Badge>
+        {task.dependencies && task.dependencies.length > 0 && (
+          <Badge variant="outline" className={cn("flex items-center gap-1 font-normal text-[10px] px-1.5 py-0 rounded", unmetDependencies.length > 0 ? "border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-500/10" : "text-muted-foreground border-muted-foreground/30")}>
+            <Link2 className="w-3 h-3" />
+            {unmetDependencies.length > 0 ? `${unmetDependencies.length} blocked` : `${task.dependencies.length} deps`}
+          </Badge>
+        )}
       </div>
       <h4 className="text-sm font-medium leading-tight mb-3 text-foreground line-clamp-2">
         {task.title}

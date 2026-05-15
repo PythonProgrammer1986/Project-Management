@@ -101,6 +101,7 @@ function LoginScreen() {
       else if (err.code === 'auth/wrong-password') setError('Incorrect password.');
       else if (err.code === 'auth/email-already-in-use') setError('User ID already exists.');
       else if (err.code === 'auth/weak-password') setError('Password should be at least 6 characters.');
+      else if (err.code === 'auth/operation-not-allowed') setError('Email/Password login is not enabled. Please enable "Email/Password" in the Firebase Console under Authentication > Sign-in method.');
       else setError('Authentication error: ' + err.message);
     } finally {
       setIsLoading(false);
