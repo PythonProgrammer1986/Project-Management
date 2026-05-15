@@ -7,34 +7,32 @@ import { Label } from './ui/label';
 import { toast } from 'sonner';
 
 export function InviteMemberDialog({ children }: { children: React.ReactNode }) {
-  const { setWorkspace } = useWorkspace();
+  const { addUser } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       toast.error('Please enter a name');
       return;
     }
-
-    const newId = `u${Date.now()}`;
     
-    setWorkspace(prev => ({
-      ...prev,
-      users: [...prev.users, {
-        id: newId,
+    try {
+      await addUser({
         name: name.trim(),
         email: email.trim() || undefined,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=random`
-      }]
-    }));
+      });
 
-    toast.success(email ? `Invitation sent to ${email}` : `Member ${name} added`);
-    setOpen(false);
-    setName('');
-    setEmail('');
+      toast.success(email ? `Invitation sent to ${email}` : `Member ${name} added`);
+      setOpen(false);
+      setName('');
+      setEmail('');
+    } catch (err) {
+      toast.error('Failed to add member');
+    }
   };
 
   return (

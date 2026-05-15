@@ -11,7 +11,7 @@ import { Trash2, Key } from 'lucide-react';
 import { useFirebase } from '../components/FirebaseProvider';
 
 export function SettingsView() {
-  const { workspace, setWorkspace, activeProjectId, setActiveProjectId } = useWorkspace();
+  const { workspace, setWorkspace, activeProjectId, setActiveProjectId, deleteProject, deleteUser } = useWorkspace();
   const { changePassword } = useFirebase();
   const [workspaceName, setWorkspaceName] = useState(workspace.name);
   const [newPassword, setNewPassword] = useState('');
@@ -42,35 +42,35 @@ export function SettingsView() {
     }
   };
 
-  const handleRemoveMember = (id: string) => {
-    setWorkspace(prev => ({
-       ...prev,
-       users: prev.users.filter(u => u.id !== id)
-    }));
-    toast.success('Member removed');
+  const handleRemoveMember = async (id: string) => {
+    try {
+      await deleteUser(id);
+      toast.success('Member removed');
+    } catch (err) {
+      toast.error('Failed to remove member');
+    }
   }
 
-  const handleDeleteProject = (projectId: string) => {
+  const handleDeleteProject = async (projectId: string) => {
     if (workspace.projects.length <= 1) {
        toast.error('Cannot delete the last project.');
        return;
     }
     
-    setWorkspace(prev => ({
-       ...prev,
-       projects: prev.projects.filter(p => p.id !== projectId),
-       tasks: prev.tasks.filter(t => t.projectId !== projectId),
-       notes: prev.notes.filter(n => n.projectId !== projectId)
-    }));
+    try {
+      await deleteProject(projectId);
+      
+      if (activeProjectId === projectId) {
+         const remainingProjects = workspace.projects.filter(p => p.id !== projectId);
+         if (remainingProjects.length > 0) {
+            setActiveProjectId(remainingProjects[0].id);
+         }
+      }
 
-    if (activeProjectId === projectId) {
-       const remainingProjects = workspace.projects.filter(p => p.id !== projectId);
-       if (remainingProjects.length > 0) {
-          setActiveProjectId(remainingProjects[0].id);
-       }
+      toast.success('Project deleted');
+    } catch (err) {
+      toast.error('Failed to delete project');
     }
-
-    toast.success('Project deleted');
   }
 
   return (

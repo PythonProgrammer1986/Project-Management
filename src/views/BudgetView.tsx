@@ -19,7 +19,7 @@ import {
 } from "../components/ui/table";
 
 export function BudgetView() {
-  const { workspace, activeProjectId, setWorkspace } = useWorkspace();
+  const { workspace, activeProjectId, updateProject } = useWorkspace();
   const project = workspace.projects.find(p => p.id === activeProjectId);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,47 +36,32 @@ export function BudgetView() {
       return;
     }
     
-    setWorkspace(prev => ({
-      ...prev,
-      projects: prev.projects.map(p => 
-        p.id === activeProjectId 
-          ? { 
-              ...p, 
-              budget: { 
-                ...p.budget,
-                total: p.budget?.total || 0,
-                spent: p.budget?.spent || 0,
-                currency: p.budget?.currency || '$',
-                conversionRate: rate,
-                lineItems: p.budget?.lineItems || []
-              } 
-            }
-          : p
-      )
-    }));
+    updateProject(activeProjectId, {
+      budget: { 
+        ...project.budget,
+        total: project.budget?.total || 0,
+        spent: project.budget?.spent || 0,
+        currency: project.budget?.currency || '$',
+        conversionRate: rate,
+        lineItems: project.budget?.lineItems || []
+      }
+    });
     toast.success('Conversion rate updated');
   };
 
   const handleUpdateLineItem = (id: string, field: keyof BudgetLineItem, value: any) => {
-    setWorkspace(prev => ({
-      ...prev,
-      projects: prev.projects.map(p => 
-        p.id === activeProjectId 
-          ? { 
-              ...p, 
-              budget: { 
-                ...p.budget, 
-                total: p.budget?.total || 0,
-                spent: p.budget?.spent || 0,
-                currency: p.budget?.currency || '$',
-                lineItems: p.budget?.lineItems?.map(item => 
-                  item.id === id ? { ...item, [field]: value } : item
-                ) || []
-              } 
-            }
-          : p
-      )
-    }));
+    updateProject(activeProjectId, {
+      budget: { 
+        ...project.budget, 
+        total: project.budget?.total || 0,
+        spent: project.budget?.spent || 0,
+        currency: project.budget?.currency || '$',
+        lineItems: project.budget?.lineItems?.map(item => 
+          item.id === id ? { ...item, [field]: value } : item
+        ) || [],
+        conversionRate: project.budget?.conversionRate || parseFloat(conversionRate) || 1
+      }
+    });
   };
 
   const handleAddLineItem = () => {
@@ -92,45 +77,29 @@ export function BudgetView() {
       remarks: ''
     };
     
-    setWorkspace(prev => ({
-      ...prev,
-      projects: prev.projects.map(p => 
-        p.id === activeProjectId 
-          ? { 
-              ...p, 
-              budget: { 
-                ...p.budget, 
-                total: p.budget?.total || 0,
-                spent: p.budget?.spent || 0,
-                currency: p.budget?.currency || '$',
-                lineItems: [...(p.budget?.lineItems || []), newItem],
-                conversionRate: p.budget?.conversionRate || parseFloat(conversionRate) || 1
-              } 
-            }
-          : p
-      )
-    }));
+    updateProject(activeProjectId, {
+      budget: { 
+        ...project.budget, 
+        total: project.budget?.total || 0,
+        spent: project.budget?.spent || 0,
+        currency: project.budget?.currency || '$',
+        lineItems: [...(project.budget?.lineItems || []), newItem],
+        conversionRate: project.budget?.conversionRate || parseFloat(conversionRate) || 1
+      }
+    });
   };
 
   const handleDeleteLineItem = (id: string) => {
-    setWorkspace(prev => ({
-      ...prev,
-      projects: prev.projects.map(p => 
-        p.id === activeProjectId 
-          ? { 
-              ...p, 
-              budget: { 
-                ...p.budget, 
-                total: p.budget?.total || 0,
-                spent: p.budget?.spent || 0,
-                currency: p.budget?.currency || '$',
-                lineItems: (p.budget?.lineItems || []).filter(item => item.id !== id),
-                conversionRate: p.budget?.conversionRate || parseFloat(conversionRate) || 1
-              } 
-            }
-          : p
-      )
-    }));
+    updateProject(activeProjectId, {
+      budget: { 
+        ...project.budget, 
+        total: project.budget?.total || 0,
+        spent: project.budget?.spent || 0,
+        currency: project.budget?.currency || '$',
+        lineItems: (project.budget?.lineItems || []).filter(item => item.id !== id),
+        conversionRate: project.budget?.conversionRate || parseFloat(conversionRate) || 1
+      }
+    });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,24 +128,16 @@ export function BudgetView() {
       const totalEstimatedKINR = parsedItems.reduce((acc, item) => acc + item.estimatedKINR, 0);
       const totalActualKINR = parsedItems.reduce((acc, item) => acc + item.actualKINR, 0);
 
-      setWorkspace(prev => ({
-        ...prev,
-        projects: prev.projects.map(p => 
-          p.id === activeProjectId 
-            ? { 
-                ...p, 
-                budget: { 
-                  ...p.budget, 
-                  total: totalEstimatedKINR, 
-                  spent: totalActualKINR,
-                  currency: 'KINR',
-                  lineItems: parsedItems,
-                  conversionRate: p.budget?.conversionRate || parseFloat(conversionRate) || 1
-                } 
-              }
-            : p
-        )
-      }));
+      updateProject(activeProjectId, {
+        budget: { 
+          ...project.budget, 
+          total: totalEstimatedKINR, 
+          spent: totalActualKINR,
+          currency: 'KINR',
+          lineItems: parsedItems,
+          conversionRate: project.budget?.conversionRate || parseFloat(conversionRate) || 1
+        }
+      });
 
       toast.success(`Successfully loaded ${parsedItems.length} records`);
     } catch (error) {

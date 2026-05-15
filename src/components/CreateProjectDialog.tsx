@@ -9,37 +9,36 @@ import { toast } from 'sonner';
 import { generateId } from '../store';
 
 export function CreateProjectDialog({ children }: { children: React.ReactNode }) {
-  const { workspace, setWorkspace, setActiveProjectId } = useWorkspace();
+  const { workspace, addProject, setActiveProjectId } = useWorkspace();
   const [open, setOpen] = useState(false);
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const newId = generateId();
     const newProject = {
-      id: newId,
       name,
       description,
       icon: 'Folder',
-      color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0') // Random hex color
+      color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'), // Random hex color
+      budget: { total: 0, spent: 0, currency: '$' }
     };
 
-    setWorkspace(prev => ({
-      ...prev,
-      projects: [...prev.projects, newProject]
-    }));
-    setActiveProjectId(newId);
-    
-    toast.success('Project created successfully');
-    setOpen(false);
-    
-    // Reset
-    setName('');
-    setDescription('');
+    try {
+      const newId = await addProject(newProject);
+      setActiveProjectId(newId);
+      toast.success('Project created successfully');
+      setOpen(false);
+      
+      // Reset
+      setName('');
+      setDescription('');
+    } catch (err) {
+      toast.error('Failed to create project');
+    }
   };
 
   return (

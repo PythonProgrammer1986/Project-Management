@@ -16,13 +16,18 @@ export interface WorkspaceContextType {
   setSelectedTaskId: (id: string | null) => void;
   activeView: 'project' | 'my-tasks' | 'home' | 'settings' | 'followup' | 'notes' | 'inbox' | 'budget';
   setActiveView: (view: 'project' | 'my-tasks' | 'home' | 'settings' | 'followup' | 'notes' | 'inbox' | 'budget') => void;
-  addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
-  updateTask: (id: string, updates: Partial<Task>) => void;
+  addProject: (project: Omit<Project, 'id'>) => Promise<string>;
+  updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<void>;
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => void;
   addNote: (note: Omit<MeetingNote, 'id' | 'createdAt'>) => void;
   updateNote: (id: string, updates: Partial<MeetingNote>) => void;
-  deleteNote: (id: string) => void;
+  deleteNote: (id: string) => Promise<void>;
   markNotificationRead: (id: string) => void;
+  addUser: (user: Omit<User, 'id'>) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
   updateCurrentUser: (updates: Partial<User>) => void;
 }
 
@@ -91,6 +96,30 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     };
   }, [fbUser]);
 
+  const addProject = async (projectData: Omit<Project, 'id'>) => {
+    const id = generateId();
+    const newProject: Project = { ...projectData, id };
+    const cleanProject = Object.entries(newProject).reduce((acc, [k, v]) => {
+      if (v !== undefined) acc[k] = v;
+      return acc;
+    }, {} as any);
+    await setDoc(doc(db, 'projects', id), cleanProject);
+    return id;
+  };
+
+  const updateProject = async (id: string, updates: Partial<Project>) => {
+    // Remove undefined fields
+    const cleanedUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      if (value !== undefined) acc[key] = value;
+      return acc;
+    }, {} as any);
+    await setDoc(doc(db, 'projects', id), cleanedUpdates, { merge: true });
+  };
+
+  const deleteProject = async (id: string) => {
+    await deleteDoc(doc(db, 'projects', id));
+  };
+
   const addTask = async (taskData: Omit<Task, 'id' | 'createdAt'>) => {
     const id = generateId();
     const newTask: Task = {
@@ -98,11 +127,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       id,
       createdAt: new Date().toISOString(),
     };
-    await setDoc(doc(db, 'tasks', id), newTask);
+    
+    // Remove undefined fields for Firestore
+    const cleanTask = Object.entries(newTask).reduce((acc, [key, value]) => {
+      if (value !== undefined) acc[key] = value;
+      return acc;
+    }, {} as any);
+
+    try {
+      await setDoc(doc(db, 'tasks', id), cleanTask);
+    } catch (e) {
+      console.error("Error creating task:", e);
+      throw e;
+    }
   };
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
-    await setDoc(doc(db, 'tasks', id), updates, { merge: true });
+    const cleanedUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      if (value !== undefined) acc[key] = value;
+      return acc;
+    }, {} as any);
+    await setDoc(doc(db, 'tasks', id), cleanedUpdates, { merge: true });
   };
 
   const deleteTask = async (id: string) => {
@@ -116,11 +161,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       id,
       createdAt: new Date().toISOString(),
     };
-    await setDoc(doc(db, 'notes', id), newNote);
+    const cleanNote = Object.entries(newNote).reduce((acc, [k, v]) => {
+      if (v !== undefined) acc[k] = v;
+      return acc;
+    }, {} as any);
+    await setDoc(doc(db, 'notes', id), cleanNote);
   };
 
   const updateNote = async (id: string, updates: Partial<MeetingNote>) => {
-    await setDoc(doc(db, 'notes', id), updates, { merge: true });
+    const cleanedUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      if (value !== undefined) acc[key] = value;
+      return acc;
+    }, {} as any);
+    await setDoc(doc(db, 'notes', id), cleanedUpdates, { merge: true });
   };
 
   const deleteNote = async (id: string) => {
@@ -132,6 +185,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       ...prev,
       notifications: prev.notifications.map(n => n.id === id ? { ...n, read: true } : n),
     }));
+  };
+
+  const addUser = async (userData: Omit<User, 'id'>) => {
+    const id = generateId();
+    const cleanUser = Object.entries(userData).reduce((acc, [key, value]) => {
+      if (value !== undefined) acc[key] = value;
+      return acc;
+    }, {} as any);
+    await setDoc(doc(db, 'users', id), { ...cleanUser, id });
+  };
+
+  const deleteUser = async (id: string) => {
+    await deleteDoc(doc(db, 'users', id));
   };
 
   const updateCurrentUser = async (updates: Partial<User>) => {
@@ -150,6 +216,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setSelectedTaskId,
       activeView,
       setActiveView,
+      addProject,
+      updateProject,
+      deleteProject,
       addTask,
       updateTask,
       deleteTask,
@@ -157,6 +226,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       updateNote,
       deleteNote,
       markNotificationRead,
+      addUser,
+      deleteUser,
       updateCurrentUser
     }}>
       {children}
